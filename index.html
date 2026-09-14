@@ -3538,9 +3538,9 @@ async function requestPasswordReset(){
 
 <script>
 // Konfigurasi EmailJS (isi 3 nilai ini agar kode aktivasi benar-benar dikirim lewat email)
-window.SHAD_EMAILJS_PUBLIC_KEY=window.SHAD_EMAILJS_PUBLIC_KEY||'';
-window.SHAD_EMAILJS_SERVICE_ID=window.SHAD_EMAILJS_SERVICE_ID||'';
-window.SHAD_EMAILJS_TEMPLATE_ID=window.SHAD_EMAILJS_TEMPLATE_ID||'';
+window.SHAD_EMAILJS_PUBLIC_KEY='h-0EBf_WONfCK_pvu';
+window.SHAD_EMAILJS_SERVICE_ID='service_eo6wkgk';
+window.SHAD_EMAILJS_TEMPLATE_ID='template_uag2jua';
 const ACCT_KEY='shad_account';
 function acctData(){try{return Object.assign({name:'Finance User',email:'finance@shadtour.co.id',role:'Admin',twofa:false,logins:[]},JSON.parse(localStorage.getItem(ACCT_KEY)||'{}'))}catch(e){return {name:'Finance User',email:'finance@shadtour.co.id',role:'Admin',twofa:false,logins:[]}}}
 function acctSave(a){localStorage.setItem(ACCT_KEY,JSON.stringify(a));renderAcct()}
