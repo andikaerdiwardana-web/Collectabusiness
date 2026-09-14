@@ -106,6 +106,7 @@ main{margin-left:var(--sidebar-w);width:calc(100% - var(--sidebar-w));max-width:
 .acct-list div:last-child{border-bottom:0}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 /* Autocomplete PNR pada form Catat Pembayaran */
@@ -161,7 +162,7 @@ main{margin-left:var(--sidebar-w);width:calc(100% - var(--sidebar-w));max-width:
 </aside>
 
 <main id="app">
-<header><button class="hamb" onclick="toggleSide()">☰</button><div class="title">FINANCE PT SHAD AL FATIH INDONESIA</div><div class="history-actions" aria-label="Riwayat perubahan"><button id="undoBtn" class="history-btn" type="button" onclick="undoChange()" disabled title="Undo (Ctrl+Z)">↶ Undo</button><button id="redoBtn" class="history-btn" type="button" onclick="redoChange()" disabled title="Ulangi / Redo (Ctrl+Y atau Ctrl+Shift+Z)">↷ Ulangi</button></div><div class="head-right"><div class="useracct" id="userAcct"><button class="userbtn" onclick="toggleUserMenu(event)"><div class="user"><strong id="uName">Finance User</strong><small id="uEmail">Admin</small></div><span class="avatar">●<i class="dot"></i></span></button><div class="usermenu" id="userMenu"><button onclick="acctAction('penagihan')"><span class="mi">▤</span>Area Penagihan</button><button onclick="acctAction('referral')"><span class="mi">◈</span>Referral Program <em class="badge-new">New</em></button><div class="usermenu-sep"></div><button onclick="acctAction('profil')"><span class="mi">☺</span>Profil Pengguna</button><button onclick="acctAction('2fa')"><span class="mi">◉</span>Aktifkan 2FA</button><button onclick="acctAction('password')"><span class="mi">⚿</span>Ganti Password</button><button onclick="acctAction('nonaktif')"><span class="mi">⊘</span>Data Usaha Nonaktif</button><button onclick="acctAction('riwayat')"><span class="mi">⧗</span>Riwayat Login</button><button onclick="acctAction('persetujuan')"><span class="mi">▩</span>Daftar Persetujuan</button><button onclick="acctAction('logout')"><span class="mi">⇥</span>Log Out</button></div></div></div></header>
+<header><button class="hamb" onclick="toggleSide()">☰</button><div class="title">FINANCE PT SHAD AL FATIH INDONESIA</div><div class="history-actions" aria-label="Riwayat perubahan"><button id="undoBtn" class="history-btn" type="button" onclick="undoChange()" disabled title="Undo (Ctrl+Z)">↶ Undo</button><button id="redoBtn" class="history-btn" type="button" onclick="redoChange()" disabled title="Ulangi / Redo (Ctrl+Y atau Ctrl+Shift+Z)">↷ Ulangi</button></div><div class="head-right"><span id="dbStatus" style="font-size:11px;font-weight:700;color:#a06a00;background:#fff6db;border:1px solid #f0df9a;padding:6px 9px;border-radius:999px" title="Status database">● Menghubungkan...</span><div class="useracct" id="userAcct"><button class="userbtn" onclick="toggleUserMenu(event)"><div class="user"><strong id="uName">Finance User</strong><small id="uEmail">Admin</small></div><span class="avatar">●<i class="dot"></i></span></button><div class="usermenu" id="userMenu"><button onclick="acctAction('penagihan')"><span class="mi">▤</span>Area Penagihan</button><button onclick="acctAction('referral')"><span class="mi">◈</span>Referral Program <em class="badge-new">New</em></button><div class="usermenu-sep"></div><button onclick="acctAction('profil')"><span class="mi">☺</span>Profil Pengguna</button><button onclick="acctAction('2fa')"><span class="mi">◉</span>Aktifkan 2FA</button><button onclick="acctAction('password')"><span class="mi">⚿</span>Ganti Password</button><button onclick="acctAction('nonaktif')"><span class="mi">⊘</span>Data Usaha Nonaktif</button><button onclick="acctAction('riwayat')"><span class="mi">⧗</span>Riwayat Login</button><button onclick="acctAction('persetujuan')"><span class="mi">▩</span>Daftar Persetujuan</button><button onclick="acctAction('logout')"><span class="mi">⇥</span>Log Out</button></div></div></div></header>
 <div class="wrap">
 
 <section id="dashboard" class="view active">
@@ -364,7 +365,7 @@ main{margin-left:var(--sidebar-w);width:calc(100% - var(--sidebar-w));max-width:
 <button class="set-mitem" data-set="lampiran" onclick="setNav('lampiran')"><span class="ico">🖇</span>Lampiran</button>
 <button class="set-mitem" data-set="atribut" onclick="setNav('atribut')"><span class="ico">☰</span>Atribut Tambahan</button>
 <button class="set-mitem" data-set="akun" onclick="setNav('akun')"><span class="ico">▤</span>Akun Perkiraan</button>
-<button class="set-mitem" data-set="lainlain" onclick="setNav('lainlain')"><span class="ico">⋯</span>Lain-lain</button></aside><div class="set-panel"><div class="set-pane active" id="setpane-perusahaan"><div class="set-phead"><h2>Perusahaan</h2><p>Identitas dan periode akuntansi perusahaan.</p></div><div class="set-tabs"><button class="set-tab active" data-tab="info" onclick="setTab('info')">Info Perusahaan</button><button class="set-tab" data-tab="alamat" onclick="setTab('alamat')">Alamat</button></div><div class="set-tabpane active" id="settab-info"><div class="formgrid"><div class="field"><label>Nama Perusahaan</label><input id="setCompany" data-pref="company" value="PT Shad Al Fatih Indonesia"></div><div class="field"><label>Kategori Usaha</label><select id="setCategory" data-pref="category"><option>Jasa</option><option>Perdagangan</option><option>Manufaktur</option><option>Transportasi & Travel</option><option>Lainnya</option></select></div><div class="field"><label>Bidang Usaha</label><select id="setSector" data-pref="sector"><option>Tour & Travel</option><option>Tiketing Penerbangan</option><option>Umroh & Haji</option><option>Perhotelan</option><option>Rental Kendaraan</option><option>Lainnya</option></select></div><div class="field"><label>Telepon</label><input id="setPhone" data-pref="phone" placeholder="0274-000000"></div><div class="field"><label>Faksimili</label><input id="setFax" data-pref="fax" placeholder="0274-000000"></div><div class="field"><label>Email</label><input id="setEmail" data-pref="email" type="email" placeholder="finance@shadtour.co.id"></div><div class="field"><label>Tgl Mulai Data</label><input id="setStartDate" data-pref="startDate" type="date"></div><div class="field"><label>Periode Akuntansi</label><select id="setPeriod" data-pref="period"><option>Januari - Desember</option><option>April - Maret</option><option>Juli - Juni</option><option>Oktober - September</option></select></div></div></div><div class="set-tabpane" id="settab-alamat"><div class="formgrid"><div class="field full"><label>Alamat</label><textarea id="setAddress" data-pref="address" rows="3" placeholder="Jl. ..."></textarea></div><div class="field"><label>Kota</label><input id="setCity" data-pref="city" value="Yogyakarta"></div><div class="field"><label>Provinsi</label><input id="setProvince" data-pref="province" placeholder="DI Yogyakarta"></div><div class="field"><label>Kode Pos</label><input id="setZip" data-pref="zip" placeholder="55000"></div><div class="field"><label>Negara</label><input id="setCountry" data-pref="country" value="Indonesia"></div></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-fitur"><div class="set-phead"><h2>Fitur</h2><p>Aktifkan modul yang dipakai perusahaan.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="fMultiCurrency"><span>Modul Invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="fPiutang"><span>Modul Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fPembayaran"><span>Modul Pembayaran</span></label><label class="set-switch"><input type="checkbox" data-pref="fAging"><span>Modul Aging Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fWa"><span>Modul Monitoring WhatsApp</span></label><label class="set-switch"><input type="checkbox" data-pref="fImport"><span>Modul Impor Data</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pajak"><div class="set-phead"><h2>Pajak</h2><p>Pengaturan perpajakan untuk dokumen penjualan.</p></div><div class="formgrid"><div class="field"><label>NPWP</label><input data-pref="taxNpwp" placeholder="00.000.000.0-000.000"></div><div class="field"><label>Nama Wajib Pajak</label><input data-pref="taxName" placeholder=""></div><div class="field"><label>Jenis Pajak</label><select data-pref="taxType"><option>PPN 11%</option><option>PPN 12%</option><option>Non PPN</option></select></div><div class="field"><label>Tarif Pajak (%)</label><input type="number" data-pref="taxRate" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="taxInclusive"><span>Harga sudah termasuk pajak</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-penjualan"><div class="set-phead"><h2>Penjualan</h2><p>Default dokumen penjualan dan invoice.</p></div><div class="formgrid"><div class="field"><label>Termin Jatuh Tempo (hari)</label><input type="number" data-pref="salTerm" placeholder="0"></div><div class="field"><label>Prefix No. Invoice</label><input data-pref="salPrefix" placeholder="INV-"></div><div class="field"><label>Metode Pembayaran Default</label><select data-pref="salMethod"><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select></div><label class="set-switch"><input type="checkbox" data-pref="salDiscount"><span>Tampilkan diskon pada invoice</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembelian"><div class="set-phead"><h2>Pembelian</h2><p>Default dokumen pembelian dan hutang.</p></div><div class="formgrid"><div class="field"><label>Termin Hutang (hari)</label><input type="number" data-pref="purTerm" placeholder="0"></div><div class="field"><label>Prefix No. Pembelian</label><input data-pref="purPrefix" placeholder="PO-"></div><label class="set-switch"><input type="checkbox" data-pref="purRef"><span>Wajib nomor referensi supplier</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembatasan"><div class="set-phead"><h2>Pembatasan</h2><p>Batasan transaksi dan periode.</p></div><div class="formgrid"><div class="field"><label>Batas Maksimal Piutang per Customer (Rp)</label><input type="number" data-pref="limCredit" placeholder="0"></div><div class="field"><label>Batas Hari Overdue Peringatan</label><input type="number" data-pref="limOverdue" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="limLock"><span>Kunci transaksi periode lampau</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-persetujuan"><div class="set-phead"><h2>Persetujuan</h2><p>Alur approval dokumen.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="apvInvoice"><span>Aktifkan persetujuan invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="apvPayment"><span>Aktifkan persetujuan pembayaran</span></label><div class="field"><label>Nama Penyetuju</label><input data-pref="apvName" placeholder="Rizky Noviarini S.Gz., M.P.H."></div><div class="field"><label>Jabatan Penyetuju</label><input data-pref="apvRole" placeholder="Mnr. Finance"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lampiran"><div class="set-phead"><h2>Lampiran</h2><p>Aturan unggah lampiran dokumen.</p></div><div class="formgrid"><div class="field"><label>Ukuran Maksimal File (MB)</label><input type="number" data-pref="attMax" placeholder="0"></div><div class="field"><label>Tipe File Diizinkan</label><select data-pref="attTypes"><option>PDF</option><option>PDF, JPG, PNG</option><option>Semua Tipe</option></select></div><label class="set-switch"><input type="checkbox" data-pref="attRequired"><span>Wajib lampiran pada pembayaran</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-atribut"><div class="set-phead"><h2>Atribut Tambahan</h2><p>Kolom tambahan pada data invoice.</p></div><div class="formgrid"><div class="field"><label>Nama Atribut 1</label><input data-pref="atr1" placeholder=""></div><div class="field"><label>Nama Atribut 2</label><input data-pref="atr2" placeholder=""></div><div class="field"><label>Nama Atribut 3</label><input data-pref="atr3" placeholder=""></div><label class="set-switch"><input type="checkbox" data-pref="atrShow"><span>Tampilkan atribut pada laporan</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-akun"><div class="set-phead"><h2>Akun Perkiraan</h2><p>Pemetaan akun default buku besar.</p></div><div class="formgrid"><div class="field"><label>Akun Piutang Usaha</label><input data-pref="accAr" placeholder="1-10200"></div><div class="field"><label>Akun Kas & Bank</label><input data-pref="accCash" placeholder="1-10001"></div><div class="field"><label>Akun Pendapatan</label><input data-pref="accIncome" placeholder="4-40000"></div><div class="field"><label>Akun Pajak Keluaran</label><input data-pref="accTax" placeholder="2-20300"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lainlain"><div class="set-phead"><h2>Lain-lain</h2><p>Preferensi aplikasi dan cadangan data.</p></div><div class="formgrid"><div class="field"><label>Nama Pengguna</label><input id="setUser" data-pref="user" placeholder=""></div><div class="field"><label>Mata Uang</label><select id="setCurrency" data-pref="currency"><option>IDR - Rupiah</option></select></div></div><div class="notice">Data aplikasi tersimpan di browser perangkat ini menggunakan localStorage. Untuk penggunaan bersama banyak user, aplikasi dapat dihubungkan ke database/server.</div><h3 style="margin:16px 0 6px">Cadangkan &amp; Pulihkan Data</h3><p style="color:var(--muted);margin:0 0 14px;font-size:12px">Unduh cadangan secara berkala agar data tidak hilang saat cache/browser dibersihkan.</p><div class="toolbar" style="margin:0"><button class="secondary" onclick="backupData()">⇩ Unduh Cadangan (JSON)</button><input class="input" id="restoreFile" type="file" accept=".json,application/json"><button class="secondary" onclick="restoreData()">⇧ Pulihkan dari Cadangan</button></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div></div></div></section>
+<button class="set-mitem" data-set="lainlain" onclick="setNav('lainlain')"><span class="ico">⋯</span>Lain-lain</button></aside><div class="set-panel"><div class="set-pane active" id="setpane-perusahaan"><div class="set-phead"><h2>Perusahaan</h2><p>Identitas dan periode akuntansi perusahaan.</p></div><div class="set-tabs"><button class="set-tab active" data-tab="info" onclick="setTab('info')">Info Perusahaan</button><button class="set-tab" data-tab="alamat" onclick="setTab('alamat')">Alamat</button></div><div class="set-tabpane active" id="settab-info"><div class="formgrid"><div class="field"><label>Nama Perusahaan</label><input id="setCompany" data-pref="company" value="PT Shad Al Fatih Indonesia"></div><div class="field"><label>Kategori Usaha</label><select id="setCategory" data-pref="category"><option>Jasa</option><option>Perdagangan</option><option>Manufaktur</option><option>Transportasi & Travel</option><option>Lainnya</option></select></div><div class="field"><label>Bidang Usaha</label><select id="setSector" data-pref="sector"><option>Tour & Travel</option><option>Tiketing Penerbangan</option><option>Umroh & Haji</option><option>Perhotelan</option><option>Rental Kendaraan</option><option>Lainnya</option></select></div><div class="field"><label>Telepon</label><input id="setPhone" data-pref="phone" placeholder="0274-000000"></div><div class="field"><label>Faksimili</label><input id="setFax" data-pref="fax" placeholder="0274-000000"></div><div class="field"><label>Email</label><input id="setEmail" data-pref="email" type="email" placeholder="finance@shadtour.co.id"></div><div class="field"><label>Tgl Mulai Data</label><input id="setStartDate" data-pref="startDate" type="date"></div><div class="field"><label>Periode Akuntansi</label><select id="setPeriod" data-pref="period"><option>Januari - Desember</option><option>April - Maret</option><option>Juli - Juni</option><option>Oktober - September</option></select></div></div></div><div class="set-tabpane" id="settab-alamat"><div class="formgrid"><div class="field full"><label>Alamat</label><textarea id="setAddress" data-pref="address" rows="3" placeholder="Jl. ..."></textarea></div><div class="field"><label>Kota</label><input id="setCity" data-pref="city" value="Yogyakarta"></div><div class="field"><label>Provinsi</label><input id="setProvince" data-pref="province" placeholder="DI Yogyakarta"></div><div class="field"><label>Kode Pos</label><input id="setZip" data-pref="zip" placeholder="55000"></div><div class="field"><label>Negara</label><input id="setCountry" data-pref="country" value="Indonesia"></div></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-fitur"><div class="set-phead"><h2>Fitur</h2><p>Aktifkan modul yang dipakai perusahaan.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="fMultiCurrency"><span>Modul Invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="fPiutang"><span>Modul Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fPembayaran"><span>Modul Pembayaran</span></label><label class="set-switch"><input type="checkbox" data-pref="fAging"><span>Modul Aging Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fWa"><span>Modul Monitoring WhatsApp</span></label><label class="set-switch"><input type="checkbox" data-pref="fImport"><span>Modul Impor Data</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pajak"><div class="set-phead"><h2>Pajak</h2><p>Pengaturan perpajakan untuk dokumen penjualan.</p></div><div class="formgrid"><div class="field"><label>NPWP</label><input data-pref="taxNpwp" placeholder="00.000.000.0-000.000"></div><div class="field"><label>Nama Wajib Pajak</label><input data-pref="taxName" placeholder=""></div><div class="field"><label>Jenis Pajak</label><select data-pref="taxType"><option>PPN 11%</option><option>PPN 12%</option><option>Non PPN</option></select></div><div class="field"><label>Tarif Pajak (%)</label><input type="number" data-pref="taxRate" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="taxInclusive"><span>Harga sudah termasuk pajak</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-penjualan"><div class="set-phead"><h2>Penjualan</h2><p>Default dokumen penjualan dan invoice.</p></div><div class="formgrid"><div class="field"><label>Termin Jatuh Tempo (hari)</label><input type="number" data-pref="salTerm" placeholder="0"></div><div class="field"><label>Prefix No. Invoice</label><input data-pref="salPrefix" placeholder="INV-"></div><div class="field"><label>Metode Pembayaran Default</label><select data-pref="salMethod"><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select></div><label class="set-switch"><input type="checkbox" data-pref="salDiscount"><span>Tampilkan diskon pada invoice</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembelian"><div class="set-phead"><h2>Pembelian</h2><p>Default dokumen pembelian dan hutang.</p></div><div class="formgrid"><div class="field"><label>Termin Hutang (hari)</label><input type="number" data-pref="purTerm" placeholder="0"></div><div class="field"><label>Prefix No. Pembelian</label><input data-pref="purPrefix" placeholder="PO-"></div><label class="set-switch"><input type="checkbox" data-pref="purRef"><span>Wajib nomor referensi supplier</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembatasan"><div class="set-phead"><h2>Pembatasan</h2><p>Batasan transaksi dan periode.</p></div><div class="formgrid"><div class="field"><label>Batas Maksimal Piutang per Customer (Rp)</label><input type="number" data-pref="limCredit" placeholder="0"></div><div class="field"><label>Batas Hari Overdue Peringatan</label><input type="number" data-pref="limOverdue" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="limLock"><span>Kunci transaksi periode lampau</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-persetujuan"><div class="set-phead"><h2>Persetujuan</h2><p>Alur approval dokumen.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="apvInvoice"><span>Aktifkan persetujuan invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="apvPayment"><span>Aktifkan persetujuan pembayaran</span></label><div class="field"><label>Nama Penyetuju</label><input data-pref="apvName" placeholder="Rizky Noviarini S.Gz., M.P.H."></div><div class="field"><label>Jabatan Penyetuju</label><input data-pref="apvRole" placeholder="Mnr. Finance"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lampiran"><div class="set-phead"><h2>Lampiran</h2><p>Aturan unggah lampiran dokumen.</p></div><div class="formgrid"><div class="field"><label>Ukuran Maksimal File (MB)</label><input type="number" data-pref="attMax" placeholder="0"></div><div class="field"><label>Tipe File Diizinkan</label><select data-pref="attTypes"><option>PDF</option><option>PDF, JPG, PNG</option><option>Semua Tipe</option></select></div><label class="set-switch"><input type="checkbox" data-pref="attRequired"><span>Wajib lampiran pada pembayaran</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-atribut"><div class="set-phead"><h2>Atribut Tambahan</h2><p>Kolom tambahan pada data invoice.</p></div><div class="formgrid"><div class="field"><label>Nama Atribut 1</label><input data-pref="atr1" placeholder=""></div><div class="field"><label>Nama Atribut 2</label><input data-pref="atr2" placeholder=""></div><div class="field"><label>Nama Atribut 3</label><input data-pref="atr3" placeholder=""></div><label class="set-switch"><input type="checkbox" data-pref="atrShow"><span>Tampilkan atribut pada laporan</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-akun"><div class="set-phead"><h2>Akun Perkiraan</h2><p>Pemetaan akun default buku besar.</p></div><div class="formgrid"><div class="field"><label>Akun Piutang Usaha</label><input data-pref="accAr" placeholder="1-10200"></div><div class="field"><label>Akun Kas & Bank</label><input data-pref="accCash" placeholder="1-10001"></div><div class="field"><label>Akun Pendapatan</label><input data-pref="accIncome" placeholder="4-40000"></div><div class="field"><label>Akun Pajak Keluaran</label><input data-pref="accTax" placeholder="2-20300"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lainlain"><div class="set-phead"><h2>Lain-lain</h2><p>Preferensi aplikasi dan cadangan data.</p></div><div class="formgrid"><div class="field"><label>Nama Pengguna</label><input id="setUser" data-pref="user" placeholder=""></div><div class="field"><label>Mata Uang</label><select id="setCurrency" data-pref="currency"><option>IDR - Rupiah</option></select></div></div><div class="notice">Data utama aplikasi tersimpan di Supabase sehingga laptop dan HP dapat menggunakan data yang sama. Browser tetap menyimpan cache lokal untuk membantu saat koneksi terputus.<br><button class="secondary" style="margin-top:8px" onclick="syncNow()">↻ Sinkronkan Sekarang</button></div><h3 style="margin:16px 0 6px">Cadangkan &amp; Pulihkan Data</h3><p style="color:var(--muted);margin:0 0 14px;font-size:12px">Unduh cadangan secara berkala agar data tidak hilang saat cache/browser dibersihkan.</p><div class="toolbar" style="margin:0"><button class="secondary" onclick="backupData()">⇩ Unduh Cadangan (JSON)</button><input class="input" id="restoreFile" type="file" accept=".json,application/json"><button class="secondary" onclick="restoreData()">⇧ Pulihkan dari Cadangan</button></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div></div></div></section>
 
 </div></main>
 
@@ -395,11 +396,97 @@ payments:[],
 settings:{company:'PT Shad Al Fatih Indonesia',city:'Yogyakarta',currency:'IDR - Rupiah',user:'Finance User'}
 };
 
-let data=JSON.parse(localStorage.getItem(KEY)||'null')||seed;
+/* ===== SUPABASE CLOUD DATABASE ===== */
+const SUPABASE_URL='https://flqlobltspawergrrprn.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_qrgj1fbg_wAY06UrP7XK_A_4Odwo15I';
+const SUPABASE_TABLE='shad_finance_data';
+let supabaseClient=null;
+let cloudReady=false;
+let cloudSaveTimer=null;
+let cloudSaveInFlight=false;
+let cloudSaveQueued=false;
+
+function setDbStatus(ok,msg){
+  const el=document.getElementById('dbStatus');
+  if(!el)return;
+  el.textContent='● '+msg;
+  el.style.color=ok?'#24853a':'#a06a00';
+  el.style.background=ok?'#eaf8ec':'#fff6db';
+  el.style.borderColor=ok?'#b9e4c1':'#f0df9a';
+}
+function cacheData(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){console.warn('Cache local gagal:',e)}}
+async function initSupabase(){
+  try{
+    if(!window.supabase||!window.supabase.createClient)throw new Error('SDK Supabase belum termuat');
+    supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+    // Login anonim membuat akses database melewati RLS sebagai role authenticated.
+    const session=await supabaseClient.auth.getSession();
+    if(!session.data.session){
+      const auth=await supabaseClient.auth.signInAnonymously();
+      if(auth.error)throw auth.error;
+    }
+    cloudReady=true;
+    setDbStatus(true,'Database terhubung');
+    return true;
+  }catch(e){
+    cloudReady=false;
+    setDbStatus(false,'Offline / lokal');
+    console.error('Supabase init gagal:',e);
+    return false;
+  }
+}
+async function loadCloudData(){
+  if(!supabaseClient)return false;
+  try{
+    const {data:row,error}=await supabaseClient.from(SUPABASE_TABLE).select('id,data,updated_at').eq('id',1).maybeSingle();
+    if(error)throw error;
+    if(row&&row.data&&Array.isArray(row.data.invoices)&&Array.isArray(row.data.customers)){
+      data=row.data;
+      cacheData();
+      lastSavedSnapshot=JSON.stringify(data);
+      ensureCustomerIds(false);
+      return true;
+    }
+    // Belum ada data cloud: migrasikan data lokal/seed hanya sekali.
+    await saveCloudData(true);
+    return true;
+  }catch(e){
+    console.error('Gagal memuat data Supabase:',e);
+    setDbStatus(false,'Database gagal dimuat');
+    return false;
+  }
+}
+async function saveCloudData(immediate=false){
+  cacheData();
+  if(!cloudReady||!supabaseClient)return false;
+  if(!immediate){
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer=setTimeout(()=>saveCloudData(true),250);
+    return true;
+  }
+  if(cloudSaveInFlight){cloudSaveQueued=true;return true;}
+  cloudSaveInFlight=true;
+  try{
+    const payload={id:1,data:data,updated_at:new Date().toISOString()};
+    const {error}=await supabaseClient.from(SUPABASE_TABLE).upsert(payload,{onConflict:'id'});
+    if(error)throw error;
+    setDbStatus(true,'Tersimpan ke Supabase');
+    return true;
+  }catch(e){
+    console.error('Gagal menyimpan ke Supabase:',e);
+    setDbStatus(false,'Gagal simpan cloud');
+    return false;
+  }finally{
+    cloudSaveInFlight=false;
+    if(cloudSaveQueued){cloudSaveQueued=false;saveCloudData(true)}
+  }
+}
+
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||JSON.parse(JSON.stringify(seed));
 
 // ID internal Customer hanya untuk fungsi Edit/Hapus.
 // Tidak ditampilkan di website dan bukan "Kode Data".
-function ensureCustomerIds(){
+function ensureCustomerIds(persist=true){
   if(!Array.isArray(data.customers)) data.customers=[];
   let changed=false;
   data.customers.forEach(c=>{
@@ -413,13 +500,13 @@ function ensureCustomerIds(){
       changed=true;
     }
   });
-  if(changed) localStorage.setItem(KEY,JSON.stringify(data));
+  if(changed&&persist) save();
 }
 ensureCustomerIds();
 // Kode Data Customer dinonaktifkan: bersihkan properti code dari data lama.
 if(Array.isArray(data.customers)){
   data.customers.forEach(c=>{if(c&&Object.prototype.hasOwnProperty.call(c,'code'))delete c.code;});
-  localStorage.setItem(KEY,JSON.stringify(data));
+  cacheData();
 }
 
 
@@ -451,7 +538,8 @@ function save(){
     redoStack=[];
     lastSavedSnapshot=currentSnapshot;
   }
-  localStorage.setItem(KEY,currentSnapshot);
+  cacheData();
+  saveCloudData();
   updateHistoryButtons();
   try{if(typeof renderDashboard==='function'&&document.getElementById('dashKpi'))renderDashboard()}catch(e){}
 }
@@ -463,7 +551,8 @@ function undoChange(){
   if(redoStack.length>HISTORY_LIMIT)redoStack.shift();
   data=cloneSnapshot(previousSnapshot);
   lastSavedSnapshot=previousSnapshot;
-  localStorage.setItem(KEY,previousSnapshot);
+  cacheData();
+  saveCloudData();
   refreshAfterHistory();
 }
 function redoChange(){
@@ -474,7 +563,8 @@ function redoChange(){
   if(undoStack.length>HISTORY_LIMIT)undoStack.shift();
   data=cloneSnapshot(nextSnapshot);
   lastSavedSnapshot=nextSnapshot;
-  localStorage.setItem(KEY,nextSnapshot);
+  cacheData();
+  saveCloudData();
   refreshAfterHistory();
 }
 document.addEventListener('keydown',function(e){
@@ -1995,19 +2085,30 @@ document.getElementById('importSummary').innerHTML=[
 }
 
 
-function init(){
-loadSettingsForm();
-/* jika tahun ini belum ada invoice, tampilkan rentang seluruh data */
-const yr=new Date().getFullYear();
-if(data.invoices.length&&!data.invoices.some(i=>(i.date||'').slice(0,4)==String(yr))){
-  const ds=data.invoices.map(i=>i.date).filter(Boolean).sort();
-  dashPeriod='custom';dashFrom=ds[0];dashTo=ds[ds.length-1];
-  document.getElementById('dashFrom').value=dashFrom;
-  document.getElementById('dashTo').value=dashTo;
-  document.querySelectorAll('#dashFilter .dfbtn').forEach(b=>b.classList.toggle('active',b.dataset.p==='custom'));
-  document.getElementById('dashCustom').classList.add('show');
+async function syncNow(){
+  if(!supabaseClient){alert('Supabase belum terhubung.');return;}
+  setDbStatus(false,'Menyinkronkan...');
+  const ok=await saveCloudData(true);
+  if(ok)alert('Data berhasil disinkronkan ke Supabase.');
+  else alert('Sinkronisasi gagal. Periksa koneksi dan pengaturan Supabase.');
 }
-renderDashboard();renderCustomers();renderImportSummary()
+
+async function init(){
+  loadSettingsForm();
+  await initSupabase();
+  if(cloudReady) await loadCloudData();
+  ensureCustomerIds();
+  /* jika tahun ini belum ada invoice, tampilkan rentang seluruh data */
+  const yr=new Date().getFullYear();
+  if(data.invoices.length&&!data.invoices.some(i=>(i.date||'').slice(0,4)==String(yr))){
+    const ds=data.invoices.map(i=>i.date).filter(Boolean).sort();
+    dashPeriod='custom';dashFrom=ds[0];dashTo=ds[ds.length-1];
+    document.getElementById('dashFrom').value=dashFrom;
+    document.getElementById('dashTo').value=dashTo;
+    document.querySelectorAll('#dashFilter .dfbtn').forEach(b=>b.classList.toggle('active',b.dataset.p==='custom'));
+    document.getElementById('dashCustom').classList.add('show');
+  }
+  renderDashboard();renderCustomers();renderImportSummary();renderAcct();
 }
 init();
 </script>
