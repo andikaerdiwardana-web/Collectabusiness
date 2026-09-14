@@ -3516,7 +3516,7 @@ function exportInvReportPDF(){
     '<script>window.onload=function(){setTimeout(function(){window.print()},350)}<\/script>'+
     '</body></html>';
   const w=window.open('','_blank');
-  if(!w){alert('Izinkan popup untuk mengunduh / mencetak PDF.');return}
+  if(!w){return}
   w.document.open();w.document.write(html);w.document.close();
 }
 </script>
@@ -3537,7 +3537,7 @@ async function requestPasswordReset(){
 </script>
 </body></html>';
   const w=window.open('','_blank');
-  if(!w){alert('Izinkan popup untuk mengunduh / mencetak PDF.');return}
+  if(!w){return}
   w.document.open();w.document.write(html);w.document.close();
 }
 </script>
