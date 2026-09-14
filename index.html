@@ -3535,12 +3535,7 @@ async function requestPasswordReset(){
  alert('Kode reset dibuat untuk email '+email+'.\nUntuk integrasi pengiriman email otomatis, hubungkan EmailJS/SMTP pada backend.');
 }
 </script>
-</body></html>';
-  const w=window.open('','_blank');
-  if(!w){return}
-  w.document.open();w.document.write(html);w.document.close();
-}
-</script>
+
 <script>
 // Konfigurasi EmailJS (isi 3 nilai ini agar kode aktivasi benar-benar dikirim lewat email)
 window.SHAD_EMAILJS_PUBLIC_KEY=window.SHAD_EMAILJS_PUBLIC_KEY||'';
