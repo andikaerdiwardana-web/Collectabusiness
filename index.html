@@ -2461,16 +2461,27 @@ function longDate(s){if(!s)return '-';try{return new Date(s+'T00:00:00').toLocal
 })();
 
 /* ---------- hitung ---------- */
+function invoiceTypeOf(i){return ['Normal','Permintaan DP','Kekurangan DP'].includes(i?.invoiceType)?i.invoiceType:'Normal'}
+function itemRateDP(x){return num(x.rateDP!=null?x.rateDP:x.rate2)}
+function itemRateDasar(x){return num(x.rate)}
+function calcNeedDeposit(i){
+  if(invoiceTypeOf(i)==='Permintaan DP'){
+    return (i.items||[]).reduce((a,x)=>a+(num(x.qty)*itemRateDP(x)),0);
+  }
+  return num(i.needDeposit);
+}
 function invCalc(i){
   let items=i.items||[];
-  let subtotal=items.reduce((a,x)=>a+(num(x.qty)*num(x.rate)-num(x.disc)),0);
+  let normalSubtotal=items.reduce((a,x)=>a+(num(x.qty)*itemRateDasar(x)-num(x.disc)),0);
+  let dpTotal=calcNeedDeposit(i);
   let fee=0, tax=0;
+  let subtotal=invoiceTypeOf(i)==='Normal'?normalSubtotal:dpTotal;
   let total=subtotal+fee+tax;
   let central=(i!==ivDraft&&i.id&&Array.isArray(data.payments))?data.payments.filter(p=>p.invoice===i.id):[];
   let hasCentral=central.length>0;
   let extraPaid=hasCentral?central.reduce((a,p)=>a+num(p.amount),0):(Array.isArray(i.additionalPayments)?i.additionalPayments.reduce((a,p)=>a+num(p.amount),0):0);
   let paid=hasCentral?extraPaid:(i.initialPaid==null?num(i.paid):num(i.initialPaid)+extraPaid);
-  return {subtotal,fee,tax,total,paid,sisa:total-paid};
+  return {subtotal,normalSubtotal,dpTotal,fee,tax,total,paid,sisa:total-paid};
 }
 function syncInvoiceAmount(i){let c=invCalc(i);i.amount=c.total;return c}
 
@@ -2564,12 +2575,17 @@ function openInvoice(id,copyOf){
   }else if(src){
     ivDraft=JSON.parse(JSON.stringify(src));ivDraft._editing=src.id;
   }else{
-    ivDraft={id:nextInvoiceNo(),customer:(data.customers[0]?.agentName)||'',client:'',phone:'',date:todayStr(),due:todayStr(),timeLimit:'16.00 WIB',docStatus:'Draft',items:[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rate2:0,disc:0}],bookingFee:0,taxPct:0,paid:0,initialPaid:0,initialPaymentDate:todayStr(),additionalPayments:[],amount:0,note:'',_editing:''};
+    ivDraft={id:nextInvoiceNo(),customer:(data.customers[0]?.agentName)||'',client:'',phone:'',date:todayStr(),due:todayStr(),timeLimit:'16.00 WIB',docStatus:'Draft',items:[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,disc:0}],bookingFee:0,taxPct:0,paid:0,initialPaid:0,initialPaymentDate:todayStr(),additionalPayments:[],amount:0,note:'',_editing:''};
   }
-  if(!ivDraft.items||!ivDraft.items.length)ivDraft.items=[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rate2:0,disc:0}];
-  ivDraft.invoiceType=ivDraft.invoiceType||'Normal';
+  if(!ivDraft.items||!ivDraft.items.length)ivDraft.items=[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,disc:0}];
+  ivDraft.invoiceType=invoiceTypeOf(ivDraft);
   ivDraft.needDeposit=num(ivDraft.needDeposit||0);
-  ivDraft.items.forEach(x=>{if(x.rate2==null)x.rate2=0;});
+  ivDraft.items.forEach(x=>{
+    if(x.rateDP==null)x.rateDP=num(x.rate2);
+    if(x.rate2==null)x.rate2=num(x.rateDP);
+    if(x.rateDP==null)x.rateDP=0;
+    if(x.rate2==null)x.rate2=0;
+  });
   if(ivDraft.initialPaid==null)ivDraft.initialPaid=num(ivDraft.paid);
   migratePayments(ivDraft);
   renderInvoiceForm();
@@ -2593,11 +2609,11 @@ function renderInvoiceForm(){
     <div class="field"><label>Sales</label><input id="ivSales" value="${esc(i.sales||'')}" placeholder="Nama sales penanggung jawab" oninput="ivSet('sales',this.value)"></div>
   </div>
   <div class="formgrid" style="margin-top:12px">
-    <div class="field"><label>Jenis Invoice</label><select id="ivType" onchange="ivSet('invoiceType',this.value);ivSetNeedDepositDefault()"><option value="Normal" ${i.invoiceType!=='Permintaan DP'?'selected':''}>Normal</option><option value="Permintaan DP" ${i.invoiceType==='Permintaan DP'?'selected':''}>Permintaan DP</option></select></div>
-    <div class="field"><label>Need Deposit / Permintaan DP</label><input id="ivNeedDeposit" type="number" min="0" step="1" value="${num(i.needDeposit)}" placeholder="0" oninput="ivSet('needDeposit',this.value,1);ivTotals()"><small style="display:block;margin-top:5px;color:#777">Aktifkan <b>Permintaan DP</b> untuk menampilkan nominal Need Deposit pada invoice cetak.</small></div>
+    <div class="field"><label>Jenis Invoice</label><select id="ivType" onchange="ivSetInvoiceType(this.value)"><option value="Normal" ${i.invoiceType==='Normal'?'selected':''}>Normal</option><option value="Permintaan DP" ${i.invoiceType==='Permintaan DP'?'selected':''}>Permintaan DP</option><option value="Kekurangan DP" ${i.invoiceType==='Kekurangan DP'?'selected':''}>Kekurangan DP</option></select><small id="ivTypeHelp" style="display:block;margin-top:5px;color:#777"></small></div>
+    <div class="field" id="ivNeedDepositField"><label id="ivNeedDepositLabel">Need Deposit / Kekurangan DP</label><input id="ivNeedDeposit" type="number" min="0" step="1" value="${num(i.needDeposit)}" placeholder="0" oninput="ivSet('needDeposit',this.value,1);ivTotals()"><small id="ivNeedDepositHelp" style="display:block;margin-top:5px;color:#777"></small></div>
   </div>
   <h3 style="margin:18px 0 8px">Detail Tiket</h3>
-  <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:18%">Deskripsi</th><th style="width:8%">PNR</th><th style="width:25%">Rute / Flight (1 baris 1 segmen)</th><th style="width:7%">Pax</th><th style="width:12%">Harga</th><th class="iv-rate2-head" style="width:12%;display:none">Rate 2</th><th style="width:11%">Diskon</th><th style="width:12%">Jumlah</th><th></th></tr></thead>
+  <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:18%">Deskripsi</th><th style="width:8%">PNR</th><th style="width:25%">Rute / Flight (1 baris 1 segmen)</th><th style="width:7%">Pax</th><th class="iv-ratedp-head" style="width:12%;display:none">Rate DP</th><th class="iv-ratedasar-head" style="width:12%">Rate Dasar</th><th style="width:11%">Diskon</th><th style="width:12%">Jumlah</th><th></th></tr></thead>
   <tbody id="ivRows"></tbody></table></div>
   <button type="button" class="secondary" style="margin-top:8px" onclick="ivAddItem()">＋ Tambah Baris Tiket</button>
   <div class="formgrid" style="margin-top:16px">
@@ -2629,9 +2645,36 @@ function renderInvoiceForm(){
   ivRenderItems();
   ivRenderPayments();
   renderTermsEditor();
+  ivUpdateTypeFields();
 }
 function ivSet(k,v,isNum){ivDraft[k]=isNum?num(v):v;ivTotals()}
-function ivSetNeedDepositDefault(){if(ivDraft.invoiceType==='Permintaan DP' && num(ivDraft.needDeposit)<=0){ivDraft.needDeposit=invCalc(ivDraft).total;let el=document.getElementById('ivNeedDeposit');if(el)el.value=ivDraft.needDeposit;ivTotals();}else if(ivDraft.invoiceType!=='Permintaan DP'){ivDraft.needDeposit=0;let el=document.getElementById('ivNeedDeposit');if(el)el.value=0;ivTotals();}}
+function ivSetInvoiceType(type){
+  ivDraft.invoiceType=invoiceTypeOf({...ivDraft,invoiceType:type});
+  if(ivDraft.invoiceType==='Normal')ivDraft.needDeposit=0;
+  if(ivDraft.invoiceType==='Permintaan DP')ivDraft.needDeposit=calcNeedDeposit(ivDraft);
+  ivRenderItems();
+  ivUpdateTypeFields();
+  ivTotals();
+}
+function ivUpdateTypeFields(){
+  const type=invoiceTypeOf(ivDraft);
+  const isDP=type==='Permintaan DP', isShort=type==='Kekurangan DP';
+  const field=document.getElementById('ivNeedDepositField');
+  const label=document.getElementById('ivNeedDepositLabel');
+  const input=document.getElementById('ivNeedDeposit');
+  const help=document.getElementById('ivNeedDepositHelp');
+  const typeHelp=document.getElementById('ivTypeHelp');
+  if(field)field.style.display=type==='Normal'?'none':'block';
+  if(label)label.textContent=isDP?'Need Deposit':isShort?'Kekurangan DP':'Need Deposit / Kekurangan DP';
+  if(typeHelp)typeHelp.textContent=isDP?'Permintaan DP: nominal DP dihitung otomatis dari Rate DP × Pax.':isShort?'Kekurangan DP: isi nominal kekurangan DP secara manual.':'Invoice Normal: menggunakan Rate Dasar sebagai nilai tagihan.';
+  if(help)help.textContent=isDP?'Otomatis mengikuti Rate DP dan Pax pada detail tiket.':isShort?'Nominal diisi manual dan menjadi nilai invoice.':'';
+  if(input){
+    input.readOnly=isDP;
+    input.style.background=isDP?'#f4f5f8':'#fff';
+    input.value=isDP?calcNeedDeposit(ivDraft):num(ivDraft.needDeposit);
+  }
+}
+function ivSetNeedDepositDefault(){ivUpdateTypeFields();ivTotals()}
 function ivAddPayment(){ivDraft.additionalPayments.push({label:PAY_TYPES[0],date:ivDraft.date||todayStr(),amount:0});ivRenderPayments();ivTotals()}
 function ivDelPayment(n){
   ivDraft.additionalPayments.splice(n,1);
@@ -2672,24 +2715,41 @@ function ivPickCustomer(name){
   if(cl)cl.value=ivDraft.client||'';if(ph)ph.value=ivDraft.phone||'';
   ivRenderItems();
 }
-function ivAddItem(){ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rate2:0,disc:0});ivRenderItems()}
+function ivAddItem(){ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,disc:0});ivRenderItems()}
 function ivDelItem(n){if(ivDraft.items.length<=1){alert('Minimal satu baris tiket.');return}ivDraft.items.splice(n,1);ivRenderItems()}
-function ivItem(n,k,v,isNum){ivDraft.items[n][k]=isNum?num(v):v;ivTotals();
-  let cell=document.getElementById('ivAmt'+n);if(cell)cell.textContent=rp(num(ivDraft.items[n].qty)*num(ivDraft.items[n].rate)-num(ivDraft.items[n].disc));}
+function ivItem(n,k,v,isNum){
+  ivDraft.items[n][k]=isNum?num(v):v;
+  if(k==='rateDP')ivDraft.items[n].rate2=ivDraft.items[n].rateDP;
+  if(k==='rate2')ivDraft.items[n].rateDP=ivDraft.items[n].rate2;
+  if(k==='qty'||k==='rateDP'){
+    if(invoiceTypeOf(ivDraft)==='Permintaan DP')ivDraft.needDeposit=calcNeedDeposit(ivDraft);
+  }
+  ivRenderItems();
+}
 function ivRenderItems(){
   let box=document.getElementById('ivRows');if(!box)return;
-  const dp=ivDraft.invoiceType==='Permintaan DP';
-  const head=document.querySelector('.iv-rate2-head');if(head)head.style.display=dp?'table-cell':'none';
-  box.innerHTML=ivDraft.items.map((x,n)=>`<tr>
-  <td><input value="${esc(x.desc)}" oninput="ivItem(${n},'desc',this.value)" placeholder="Ticket Qatar Airways"></td>
-  <td><input value="${esc(x.pnr)}" oninput="ivItem(${n},'pnr',this.value)" placeholder="94ZIGQ"></td>
-  <td><textarea rows="3" oninput="ivItem(${n},'flights',this.value)" placeholder="QR 959 27NOV CGKDOH 0845 1305">${esc(x.flights)}</textarea></td>
-  <td><input type="number" min="0" value="${num(x.qty)}" oninput="ivItem(${n},'qty',this.value,1)"></td>
-  <td><input type="number" min="0" value="${num(x.rate)}" oninput="ivItem(${n},'rate',this.value,1)"></td>
-  <td class="iv-rate2-cell" style="${dp?'':'display:none'}"><input type="number" min="0" value="${num(x.rate2)}" oninput="ivItem(${n},'rate2',this.value,1)" placeholder="Rate kedua"></td>
-  <td><input type="number" min="0" value="${num(x.disc)}" oninput="ivItem(${n},'disc',this.value,1)"></td>
-  <td class="amt" id="ivAmt${n}">${rp(num(x.qty)*num(x.rate)-num(x.disc))}</td>
-  <td><button type="button" class="secondary" style="color:#d71920" onclick="ivDelItem(${n})">🗑</button></td></tr>`).join('');
+  const type=invoiceTypeOf(ivDraft);
+  const showDP=type!=='Normal';
+  const head=document.querySelector('.iv-ratedp-head');if(head)head.style.display=showDP?'table-cell':'none';
+  const dasar=document.querySelector('.iv-ratedasar-head');if(dasar)dasar.textContent=type==='Normal'?'Rate Dasar':'Rate Dasar';
+  box.innerHTML=ivDraft.items.map((x,n)=>{
+    const dp=num(x.rateDP!=null?x.rateDP:x.rate2);
+    const dasarRate=num(x.rate);
+    const amount=type==='Normal'
+      ? num(x.qty)*dasarRate-num(x.disc)
+      : (type==='Permintaan DP'?num(x.qty)*dp:num(x.qty)*dasarRate-num(x.disc));
+    return `<tr>
+    <td><input value="${esc(x.desc)}" oninput="ivItem(${n},'desc',this.value)" placeholder="Ticket Qatar Airways"></td>
+    <td><input value="${esc(x.pnr)}" oninput="ivItem(${n},'pnr',this.value)" placeholder="94ZIGQ"></td>
+    <td><textarea rows="3" oninput="ivItem(${n},'flights',this.value)" placeholder="QR 959 27NOV CGKDOH 0845 1305">${esc(x.flights)}</textarea></td>
+    <td><input type="number" min="0" value="${num(x.qty)}" oninput="ivItem(${n},'qty',this.value,1)"></td>
+    <td class="iv-ratedp-cell" style="${showDP?'':'display:none'}"><input type="number" min="0" value="${dp}" oninput="ivItem(${n},'rateDP',this.value,1)" placeholder="Rate DP"></td>
+    <td><input type="number" min="0" value="${dasarRate}" oninput="ivItem(${n},'rate',this.value,1)" placeholder="Rate Dasar"></td>
+    <td><input type="number" min="0" value="${num(x.disc)}" oninput="ivItem(${n},'disc',this.value,1)"></td>
+    <td class="amt" id="ivAmt${n}">${rp(amount)}</td>
+    <td><button type="button" class="secondary" style="color:#d71920" onclick="ivDelItem(${n})">🗑</button></td></tr>`;
+  }).join('');
+  ivUpdateTypeFields();
   ivTotals();
 }
 function ivTotals(){
@@ -2710,10 +2770,17 @@ function submitInvoice(e){
   let invalidPayment=(i.additionalPayments||[]).some(p=>num(p.amount)>0&&!p.date);
   if(invalidPayment){alert('Tanggal dan nominal setiap pembayaran wajib diisi.');return}
   i.additionalPayments=(i.additionalPayments||[]).filter(p=>num(p.amount)>0);i.initialPaid=0;i.bookingFee=0;i.taxPct=0;
-  i.invoiceType=i.invoiceType==='Permintaan DP'?'Permintaan DP':'Normal';
-  i.needDeposit=i.invoiceType==='Permintaan DP'?num(i.needDeposit):0;
-  i.items=(i.items||[]).map(x=>({...x,rate2:num(x.rate2)}));
-  if(i.invoiceType==='Permintaan DP' && i.needDeposit<=0){alert('Nominal Need Deposit wajib diisi untuk Invoice Permintaan DP.');return}
+  i.invoiceType=invoiceTypeOf(i);
+  i.items=(i.items||[]).map(x=>({...x,rateDP:num(x.rateDP!=null?x.rateDP:x.rate2),rate2:num(x.rateDP!=null?x.rateDP:x.rate2),rate:num(x.rate)}));
+  if(i.invoiceType==='Permintaan DP'){
+    i.needDeposit=calcNeedDeposit(i);
+    if(i.needDeposit<=0){alert('Rate DP dan Pax wajib diisi untuk Invoice Permintaan DP.');return}
+  }else if(i.invoiceType==='Kekurangan DP'){
+    i.needDeposit=num(i.needDeposit);
+    if(i.needDeposit<=0){alert('Nominal Kekurangan DP wajib diisi.');return}
+  }else{
+    i.needDeposit=0;
+  }
   let c=invCalc(i);i.paid=c.paid;
   if(c.paid>c.total){alert('Pembayaran tidak boleh melebihi total invoice.');return}
   if(c.total<=0&&i.docStatus!=='Draft'){alert('Total invoice masih 0. Lengkapi detail tiket atau simpan sebagai Draft.');return}
@@ -2785,13 +2852,21 @@ function invoicePayments(i){
 }
 function invoiceSheetHTML(i){
   let c=invCalc(i), pays=invoicePayments(i), cust=data.customers.find(x=>x.agentName===i.customer)||{};
-  let rows=(i.items||[]).map((x,n)=>`<tr>
+  const printType=invoiceTypeOf(i);
+  let rows=(i.items||[]).map((x,n)=>{
+    const dp=num(x.rateDP!=null?x.rateDP:x.rate2), dasar=num(x.rate), qty=num(x.qty);
+    const amount=printType==='Normal'?qty*dasar-num(x.disc):(printType==='Permintaan DP'?qty*dp:qty*dasar-num(x.disc));
+    const rateHtml=printType==='Normal'
+      ? (dasar?rpSplit(dasar):'-')
+      : `<div>${dp?rpSplit(dp):'-'} <small style="display:block;font-size:8px;color:#666">Rate DP</small></div><div class="rate2-print">${dasar?rpSplit(dasar):'-'} <small style="display:block;font-size:8px;color:#666">Rate Dasar</small></div>`;
+    return `<tr>
     <td class="c">${n+1}</td>
     <td class="desc"><b>${esc(x.desc||'-')}</b>${x.flights?'<div class="fl">'+esc(x.flights).split('\n').filter(Boolean).map(f=>'<span>'+f+'</span>').join('')+'</div>':''}</td>
     <td class="c">${esc(x.pnr||'-')}</td>
-    <td class="c">${num(x.qty)||'-'}</td>
-    <td class="r">${num(x.rate)?rpSplit(x.rate):'-'}${i.invoiceType==='Permintaan DP'&&num(x.rate2)?'<div class="rate2-print">'+rpSplit(x.rate2)+'</div>':''}</td>
-    <td class="r">${(num(x.qty)*num(x.rate)-num(x.disc))?rpSplit(num(x.qty)*num(x.rate)-num(x.disc)):'-'}</td></tr>`).join('');
+    <td class="c">${qty||'-'}</td>
+    <td class="r">${rateHtml}</td>
+    <td class="r">${amount?rpSplit(amount):'-'}</td></tr>`;
+  }).join('');
   let discTotal=(i.items||[]).reduce((a,x)=>a+num(x.disc),0);
   let extra='';
   if(discTotal)extra+=`<tr><td colspan="5" class="r muted">Diskon</td><td class="r">${rpSplit(-discTotal)}</td></tr>`;
@@ -2800,7 +2875,7 @@ function invoiceSheetHTML(i){
   return `<div class="sheet">
   <img class="sh-head" src="${INVIMG.header}" alt="Shad Tour &amp; Travel">
   <div class="sh-body">
-    <div class="sh-title"><h1>INVOICE</h1><p>No: ${esc(i.id)}</p><span class="sh-stat ${status(i)==='Lunas'?'ok':''}">${status(i)}</span></div>
+    <div class="sh-title"><h1>INVOICE</h1><p>No: ${esc(i.id)}${printType!=='Normal'?' · '+esc(printType):''}</p><span class="sh-stat ${status(i)==='Lunas'?'ok':''}">${status(i)}</span></div>
     <div class="sh-top">
       <div class="billto">
         <h4>BILL TO</h4>
@@ -2819,7 +2894,7 @@ function invoiceSheetHTML(i){
     <div class="sh-mid">
       <div class="paybox">
         <table class="pr"><thead><tr><th>PAYMENT RECORD</th><th style="width:22%">DATE</th><th style="width:28%">AMOUNT</th></tr></thead><tbody>
-        ${(()=>{const paymentRows=pays.length?pays.map(p=>{const refund=isRefundMethod(p.label)||num(p.amount)<0;const amtHtml=refund?`<div class="rp-cell refund-amount" style="color:#d71920 !important;font-weight:700 !important"><span class="rp-cur" style="color:#d71920 !important">Rp</span><span class="rp-num" style="color:#d71920 !important">${Number(p.amount||0).toLocaleString('id-ID')}</span></div>`:rpSplit(p.amount);return `<tr class="${refund?'refund-print-row':''}"><td>${esc(p.label)}</td><td class="c">${p.date?date(p.date):'-'}</td><td class="r ${refund?'refund-amount':''}">${amtHtml}</td></tr>`}).join(''):'<tr><td class="c muted">-</td><td class="c muted">&nbsp;</td><td class="c muted">&nbsp;</td></tr>';const blankCount=Math.max(0,8-Math.max(1,pays.length));const blanks=Array.from({length:blankCount},()=>'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>').join('');const allRows=paymentRows+blanks;const rowsArr=allRows.match(/<tr[\s\S]*?<\/tr>/g)||[];const mid=Math.ceil(rowsArr.length/2);return rowsArr.slice(0,mid).join('')+(i.invoiceType==='Permintaan DP'&&num(i.needDeposit)>0?`<tr class="need-deposit-row"><td colspan="3"><div class="need-deposit-box">Need Deposit ${rp(num(i.needDeposit))}</div></td></tr>`:'')+rowsArr.slice(mid).join('')})()}
+        ${(()=>{const paymentRows=pays.length?pays.map(p=>{const refund=isRefundMethod(p.label)||num(p.amount)<0;const amtHtml=refund?`<div class="rp-cell refund-amount" style="color:#d71920 !important;font-weight:700 !important"><span class="rp-cur" style="color:#d71920 !important">Rp</span><span class="rp-num" style="color:#d71920 !important">${Number(p.amount||0).toLocaleString('id-ID')}</span></div>`:rpSplit(p.amount);return `<tr class="${refund?'refund-print-row':''}"><td>${esc(p.label)}</td><td class="c">${p.date?date(p.date):'-'}</td><td class="r ${refund?'refund-amount':''}">${amtHtml}</td></tr>`}).join(''):'<tr><td class="c muted">-</td><td class="c muted">&nbsp;</td><td class="c muted">&nbsp;</td></tr>';const blankCount=Math.max(0,8-Math.max(1,pays.length));const blanks=Array.from({length:blankCount},()=>'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>').join('');const allRows=paymentRows+blanks;const rowsArr=allRows.match(/<tr[\s\S]*?<\/tr>/g)||[];const mid=Math.ceil(rowsArr.length/2);return rowsArr.slice(0,mid).join('')+((printType==='Permintaan DP'||printType==='Kekurangan DP')&&num(i.needDeposit)>0?`<tr class="need-deposit-row"><td colspan="3"><div class="need-deposit-box">${printType==='Permintaan DP'?'Need Deposit':'Kekurangan DP'} ${rp(num(i.needDeposit))}</div></td></tr>`:'')+rowsArr.slice(mid).join('')})()}
         </tbody><tfoot><tr class="total-payment"><th>TOTAL PAYMENT</th><th></th><th class="r">${rpSplit(c.paid)}</th></tr></tfoot></table>
       </div>
       <div class="infobox">
